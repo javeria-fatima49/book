@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
+import UrduTranslateButton from '@site/src/components/UrduTranslateButton';
 import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
@@ -38,7 +39,8 @@ export default function Home(): ReactNode {
       description="Description will go into a meta tag in <head />"
     >
       <HomepageHeader />
-      <main>
+      <UrduTranslateButton backendApiUrl={siteConfig.customFields?.backendApiUrl as string || 'http://localhost:8000'} />
+      <main id="docusaurus-main-content">
         <HomepageFeatures />
       </main>
     </Layout>

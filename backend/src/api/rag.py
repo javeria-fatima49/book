@@ -1,7 +1,10 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from backend.src.models.rag_models import (
-    RagQueryRequest, RagQueryResponse, UpsertEmbeddingsRequest, UpsertEmbeddingsResponse
+    RagQueryRequest,
+    RagQueryResponse,
+    UpsertEmbeddingsRequest,
+    UpsertEmbeddingsResponse,
 )
 from backend.src.services.rag_service import RagService
 
@@ -23,7 +26,8 @@ async def query_rag_endpoint(
     request: RagQueryRequest, rag_service: RagService = Depends(get_rag_service)
 ):
     """
-    Handles RAG queries, processing user questions and returning AI-generated answers with sources.
+    Handles RAG queries, processing user questions and returning AI-generated
+    answers with sources.
     """
     logger.info(f"Received RAG query: {request.query} from user: {request.user_id}")
     try:
@@ -48,10 +52,12 @@ async def upsert_embeddings_endpoint(
     request: UpsertEmbeddingsRequest, rag_service: RagService = Depends(get_rag_service)
 ):
     """
-    Processes textbook content, converts it into embeddings, and upserts them to Qdrant.
+    Processes textbook content, converts it into embeddings, and upserts them
+    to Qdrant.
     """
     logger.info(
-        f"Received request to upsert embeddings for content with metadata: {request.metadata}"
+        "Received request to upsert embeddings for content with metadata:"
+        f" {request.metadata}"
     )
     try:
         upserted_count = await rag_service.upsert_embeddings(

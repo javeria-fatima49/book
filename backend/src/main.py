@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi_limiter import FastAPILimiter
 from redis import Redis
 from backend.src.core.config import REDIS_URL
-from .api import rag
+from .api import rag, translate
 
 # Configure basic logging
 logging.basicConfig(
@@ -13,6 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
 
 @app.on_event("startup")
 async def startup():
@@ -23,12 +24,15 @@ async def startup():
     else:
         logger.warning("REDIS_URL is not set. FastAPI Limiter will not be initialized.")
 
+
 @app.on_event("shutdown")
 async def shutdown():
     await FastAPILimiter.shutdown()
     logger.info("FastAPI Limiter shutdown.")
 
+
 app.include_router(rag.router, prefix="/api/v1")
+app.include_router(translate.router, prefix="/api/v1")
 
 
 @app.exception_handler(HTTPException)

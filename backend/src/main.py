@@ -1,10 +1,11 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_limiter import FastAPILimiter
-from redis import Redis
-from backend.src.core.config import REDIS_URL
-from .api import rag, translate
+from redis.asyncio import Redis
+from src.core.config import REDIS_URL
+from src.api import rag, translate
 
 # Configure basic logging
 logging.basicConfig(
@@ -13,6 +14,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# Add CORS middleware
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event("startup")
@@ -31,7 +43,7 @@ async def shutdown():
     logger.info("FastAPI Limiter shutdown.")
 
 
-app.include_router(rag.router, prefix="/api/v1")
+app.include_router(rag.router, prefix="/api/v1/rag")
 app.include_router(translate.router, prefix="/api/v1")
 
 

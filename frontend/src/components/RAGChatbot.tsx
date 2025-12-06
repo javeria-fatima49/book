@@ -37,7 +37,7 @@ const RAGChatbot: React.FC<RAGChatbotProps> = ({ backendApiUrl }) => {
   const handleSubmit = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { type: 'user', text: input };
+    const userMessage: { type: 'user'; text: string } = { type: 'user', text: input };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
     setLoading(true);
@@ -45,16 +45,16 @@ const RAGChatbot: React.FC<RAGChatbotProps> = ({ backendApiUrl }) => {
     try {
       const request: RagQueryRequest = { query: input };
       const data: RagQueryResponse = await queryRag(request, backendApiUrl);
-      const aiMessage = {
+      const aiMessage: { type: 'ai'; text: string; sources: string[] } = {
         type: 'ai',
         text: data.answer,
-        sources: data.sources.map((s) => s.metadata.url),
+        sources: data.sources.map((s) => s.metadata.url as string),
       };
 
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
     } catch (error) {
       console.error('Error fetching RAG response:', error);
-      const errorMessage = {
+      const errorMessage: { type: 'ai'; text: string } = {
         type: 'ai',
         text: 'Sorry, something went wrong. Please try again.',
       };

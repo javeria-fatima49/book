@@ -1,0 +1,200 @@
+---
+id: chapter3_3
+title: Learning in Robotics Reinforcement Learning
+slug: /chapter3_3
+---
+
+## Introduction
+
+While traditional AI planning allows robots to achieve goals in well-defined environments, real-world scenarios are often too complex or unpredictable to pre-program every possible action. This is where **learning** becomes indispensable. Among various learning paradigms, **Reinforcement Learning (RL)** stands out as a powerful approach that enables robots to acquire new skills and adapt their behavior through trial and error, much like humans and animals learn. This chapter introduces the core concepts of RL and its transformative role in modern robotics.
+
+## Explanation
+
+Reinforcement Learning is a type of machine learning where an agent learns to make decisions by performing actions in an environment to maximize a cumulative reward. Unlike supervised learning, RL agents are not given explicit instructions but rather learn from the consequences of their actions. In robotics, this allows for the acquisition of complex motor skills and decision-making policies without explicit programming for every possible situation.
+
+### Core Components of Reinforcement Learning
+
+*   **Agent:** The learner or decision-maker (e.g., a robot).
+*   **Environment:** The physical or simulated world with which the agent interacts.
+*   **State (S):** A complete description of the environment at a given time. The robot's sensory input forms its observation of the state.
+*   **Action (A):** A move the agent can make in the environment. In robotics, this could be controlling a joint motor or moving a mobile base.
+*   **Reward (R):** A numerical feedback signal from the environment, indicating how good or bad the agent's last action was. The agent's goal is to maximize cumulative reward over time.
+*   **Policy ($\\pi$):** The agent's strategy, which maps states to actions. It dictates the agent's behavior.
+*   **Value Function (V or Q):** A prediction of the future reward an agent can expect from a given state (V) or a given state-action pair (Q).
+
+### The RL Loop
+
+1.  **Observe State:** The agent perceives its current state (S) from the environment.
+2.  **Choose Action:** Based on its current policy ($\\pi$), the agent selects an action (A).
+3.  **Execute Action:** The agent performs the action in the environment.
+4.  **Receive Reward & New State:** The environment transitions to a new state (S') and provides a reward (R).
+5.  **Learn:** The agent uses (S, A, S', R) to update its policy and value functions, aiming to improve future reward.
+
+### Key RL Algorithms in Robotics
+
+*   **Model-Free vs. Model-Based RL:**
+    *   **Model-Free:** Learns directly from experience without building an explicit model of the environment's dynamics (e.g., Q-learning, SARSA, Policy Gradients like REINFORCE, Actor-Critic methods like A2C/A3C/PPO).
+    *   **Model-Based:** Learns or is given a model of how the environment works and uses this model for planning (e.g., Dyna-Q, Monte Carlo Tree Search).
+*   **Off-Policy vs. On-Policy:**
+    *   **Off-Policy:** Learns about the optimal policy regardless of the agent's current exploration policy (e.g., Q-learning).
+    *   **On-Policy:** Learns about the policy currently being followed (e.g., SARSA).
+*   **Deep Reinforcement Learning (DRL):** Combines RL with deep neural networks. Deep Q-Networks (DQN) use neural networks to approximate Q-functions, allowing RL to tackle high-dimensional observation spaces (e.g., raw camera images) and continuous action spaces.
+
+### Challenges and Applications in Robotics
+
+*   **Challenges:**
+    *   **Sample Efficiency:** Real robots are expensive and time-consuming to train; RL often requires many interactions.
+    *   **Safety:** Exploring randomly in the real world can be dangerous.
+    *   **Reward Design:** Crafting an effective reward function can be difficult.
+    *   **Sim-to-Real Transfer:** Bridging the gap between training in simulation and deployment on a physical robot.
+*   **Applications:**
+    *   **Locomotion:** Teaching legged robots to walk, run, and balance.
+    *   **Manipulation:** Learning complex grasping and assembly tasks.
+    *   **Navigation:** Developing collision-free navigation strategies in dynamic environments.
+    *   **Human-Robot Interaction:** Learning to respond appropriately to human commands or actions.
+
+## Code Blocks
+
+Here's a simplified Python example of Q-learning, a fundamental model-free RL algorithm, in a basic grid-world environment.
+
+```python title="simple_q_learning.py"
+import numpy as np
+import random
+
+# Environment setup
+# 0 = empty, 1 = obstacle, 2 = goal
+grid = [
+    [0, 0, 0, 0],
+    [0, 1, 0, 1],
+    [0, 0, 0, 0],
+    [1, 0, 2, 0] # Goal at (3,2)
+]
+rows, cols = len(grid), len(grid[0])
+num_states = rows * cols
+num_actions = 4 # 0:up, 1:down, 2:left, 3:right
+
+# Q-table initialization (state x action)
+q_table = np.zeros((num_states, num_actions))
+
+# Hyperparameters
+learning_rate = 0.1
+discount_factor = 0.99
+epsilon = 0.1 # For epsilon-greedy exploration
+num_episodes = 1000
+
+# Map (row, col) to a single state index
+def state_to_index(r, c):
+    return r * cols + c
+
+# Map state index to (row, col)
+def index_to_state(idx):
+    return idx // cols, idx % cols
+
+def get_next_state_and_reward(current_r, current_c, action_idx):
+    next_r, next_c = current_r, current_c
+    reward = -0.1 # Small penalty for each step
+
+    if action_idx == 0: # Up
+        next_r = max(0, current_r - 1)
+    elif action_idx == 1: # Down
+        next_r = min(rows - 1, current_r + 1)
+    elif action_idx == 2: # Left
+        next_c = max(0, current_c - 1)
+    elif action_idx == 3: # Right
+        next_c = min(cols - 1, current_c + 1)
+    
+    if grid[next_r][next_c] == 1: # Hit obstacle
+        next_r, next_c = current_r, current_c # Stay in current position
+        reward = -1.0 # Large penalty
+    elif grid[next_r][next_c] == 2: # Reached goal
+        reward = 10.0 # Large reward
+
+    return next_r, next_c, reward
+
+if __name__ == "__main__":
+    print("--- Simple Q-Learning in Grid World ---")
+
+    for episode in range(num_episodes):
+        current_r, current_c = (0, 0) # Start from top-left
+        current_state_idx = state_to_index(current_r, current_c)
+        done = False
+
+        while not done:
+            # Epsilon-greedy action selection
+            if random.uniform(0, 1) < epsilon:
+                action_idx = random.randrange(num_actions) # Explore
+            else:
+                action_idx = np.argmax(q_table[current_state_idx, :]) # Exploit
+
+            next_r, next_c, reward = get_next_state_and_reward(current_r, current_c, action_idx)
+            next_state_idx = state_to_index(next_r, next_c)
+
+            # Q-learning update formula
+            old_value = q_table[current_state_idx, action_idx]
+            next_max = np.max(q_table[next_state_idx, :])
+            
+            new_value = (1 - learning_rate) * old_value + learning_rate * (reward + discount_factor * next_max)
+            q_table[current_state_idx, action_idx] = new_value
+
+            current_r, current_c = next_r, next_c
+            current_state_idx = next_state_idx
+
+            if grid[current_r][current_c] == 2: # Reached goal
+                done = True
+        
+        if episode % 100 == 0:
+            print(f"Episode {episode} finished.")
+
+    print("\n--- Q-table after training ---")
+    print(np.round(q_table, 2))
+
+    print("\n--- Testing learned policy ---")
+    current_r, current_c = (0, 0)
+    path = [(current_r, current_c)]
+    while grid[current_r][current_c] != 2:
+        current_state_idx = state_to_index(current_r, current_c)
+        action_idx = np.argmax(q_table[current_state_idx, :]) # Choose best action
+        next_r, next_c, _ = get_next_state_and_reward(current_r, current_c, action_idx)
+        current_r, current_c = next_r, next_c
+        path.append((current_r, current_c))
+        if len(path) > 20: # Prevent infinite loop in case of bad policy
+            print("Path too long, stopping.")
+            break
+    print("Path taken:", path)
+```
+
+## Conclusion
+
+Reinforcement Learning offers a powerful paradigm for robots to learn complex behaviors and adapt to dynamic, uncertain environments without explicit programming. By maximizing cumulative reward through trial and error, RL agents can acquire skills for locomotion, manipulation, and navigation that are difficult to achieve with traditional methods. Despite challenges such as sample efficiency and safety, the advent of Deep Reinforcement Learning is pushing the boundaries of what autonomous robots can achieve, promising more intelligent and adaptable robotic systems in the future.
+
+## Multiple Choice Questions
+
+1.  What is the primary goal of an agent in Reinforcement Learning?
+    a) To follow explicit instructions given by a programmer.
+    b) To minimize interaction with the environment.
+    c) To maximize cumulative reward over time.
+    d) To learn a perfect model of the environment.
+
+2.  Which component of Reinforcement Learning dictates the agent's strategy, mapping states to actions?
+    a) Reward
+    b) Environment
+    c) Policy
+    d) Value Function
+
+3.  What distinguishes Reinforcement Learning from supervised learning?
+    a) RL agents receive explicit labels for every action.
+    b) RL agents learn from trial and error and consequences of actions.
+    c) RL agents only work in simulated environments.
+    d) RL agents require less data than supervised learning.
+
+4.  Which of the following is a model-free Reinforcement Learning algorithm?
+    a) Monte Carlo Tree Search
+    b) Q-learning
+    c) Dyna-Q
+    d) A* search
+
+5.  In the `simple_q_learning.py` example, what is the purpose of `epsilon`?
+    a) To determine the learning rate.
+    b) To encourage exploration by sometimes choosing random actions.
+    c) To discount future rewards.
+    d) To define the size of the Q-table.

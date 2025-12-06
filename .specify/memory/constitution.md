@@ -1,55 +1,57 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Project Constitution — "Physical AI & Humanoid Robotics"
 
-## Core Principles
+## 1. Audience & Tone
+- **Target Audience:** Intermediate developers and AI/robotics students  
+- **Tone:** Technical but easy-to-understand; include diagrams, examples, and quizzes
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+---
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
-
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
-
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
-
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-### [PRINCIPLE_6_NAME]
+## 2. Tools & Languages
+- **Frontend:** TypeScript  
+- **Backend:** Python (FastAPI)  
+- **Vector Database:** Qdrant Cloud Free Tier  
+- **AI Models:** ChatKit / OpenAI Agents / Gemini (Free Keys)  
+- **Documentation:** Docusaurus 3 (MDX)  
 
 
-[PRINCIPLE__DESCRIPTION]
+## 3. Documentation Standards
+Every chapter must include:
+- **Introduction**
+- **Explanation**
+- **Code blocks** (MDX + captions)
+- **Image placeholder**
+- **Conclusion**
+- **5 MCQs**
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+## 4. Structure & File Rules
+- **Book content:** `/docs` folder  
+- **Images:** `/static/img`  
+- **Backend:** `/backend` folder (FastAPI)  
+- **Chatbot UI:** Integrated inside `/src/pages/chat`  
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+---
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+## 5. Ethics & Safety
+- Mandatory chapter: **“Ethics of Physical AI”**  
+- No instructions for harmful, unsafe, or illegal robotics.
+- create 5 folders and each folder contain 5 chapters 
+---
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+## 6. Performance
+- Book must load fast  
+- Heavy assets must be **lazy-loaded**
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+---
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+## 7. Reusability
+- Build **Subagents (Skills)**:  
+  - Summary Skill  
+  - Quiz Skill  
+  - Search Skill  
+
+---
+
+## 8. Deployment
+- Deploy to **GitHub Pages** via **GitHub Actions**  
+- Backend **local demo** + instructions required

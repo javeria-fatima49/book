@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from backend.src.models.translate_models import TranslateRequest, TranslateResponse
-from backend.src.services.translate_service import TranslationService
+from src.models.translate_models import TranslateRequest, TranslateResponse
+from src.services.translate_service import TranslationService
 import logging
 
 logger = logging.getLogger(__name__)

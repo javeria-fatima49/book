@@ -1,0 +1,138 @@
+---
+id: chapter3_4
+title: Robot Decision Making under Uncertainty
+slug: /chapter3_4
+---
+
+## Introduction
+
+The real world is rarely predictable. Robots often operate with imperfect information, facing noisy sensor readings, uncertain actuator effects, and dynamic environments where outcomes are not guaranteed. For a robot to function intelligently and reliably in such conditions, it must be capable of making robust decisions **under uncertainty**. This chapter explores the fundamental concepts and techniques that enable robots to reason probabilistically and make optimal choices even when faced with incomplete or unreliable information.
+
+## Explanation
+
+Decision-making under uncertainty is a core challenge in AI robotics. It involves formalizing uncertainty, predicting probabilistic outcomes, and selecting actions that maximize expected utility or minimize risk. This is a departure from classical AI planning, which assumes a perfectly known and deterministic world.
+
+### Sources of Uncertainty
+
+*   **Perceptual Uncertainty:** Sensors are inherently noisy and provide incomplete information. A robot might "see" an object, but its exact position or identity might be ambiguous.
+*   **Actuator Uncertainty:** Robot actions do not always produce their intended effects precisely. Motors might overshoot, grippers might slip, or movements might be slightly off.
+*   **Environmental Uncertainty:** The world itself is dynamic and unpredictable. Objects might move, new obstacles might appear, or tasks might change.
+*   **Model Uncertainty:** The robot's internal model of the world or its own dynamics might be incomplete or inaccurate.
+
+### Probabilistic Reasoning
+
+To handle uncertainty, robots often employ probabilistic reasoning, using probability theory to represent and manipulate uncertain knowledge.
+
+*   **Bayes' Theorem:** A fundamental tool for updating beliefs (probabilities) in light of new evidence. It allows robots to infer the probability of a state given new sensor observations.
+    *   `P(A|B) = [P(B|A) * P(A)] / P(B)` where `P(A|B)` is the posterior probability, `P(B|A)` is the likelihood, `P(A)` is the prior probability, and `P(B)` is the evidence.
+*   **Bayesian Networks:** Graphical models that represent probabilistic relationships among a set of variables. They are used for encoding complex dependencies and performing inference.
+
+### Decision-Making Frameworks
+
+*   **Decision Trees:** A flowchart-like structure where each internal node represents a test on an attribute, each branch represents an outcome of the test, and each leaf node represents a decision. Useful for classification and sequential decision problems.
+*   **Markov Decision Processes (MDPs):** A mathematical framework for modeling sequential decision making in situations where outcomes are partly random and partly under the control of a decision maker.
+    *   **Components:** States, Actions, Transition Probabilities (P(s'|s,a)), Rewards (R(s,a,s')), and a Discount Factor.
+    *   **Goal:** Find an optimal policy (a mapping from states to actions) that maximizes the expected cumulative discounted reward over time.
+    *   **Solutions:** Value Iteration, Policy Iteration.
+*   **Partially Observable Markov Decision Processes (POMDPs):** An extension of MDPs for situations where the agent does not know the exact state of the environment but only receives observations that depend on the state. This introduces uncertainty about the current state, which the robot must maintain as a probability distribution (belief state).
+    *   **Challenges:** Computationally very complex, often requiring approximations.
+
+### Applications in Robotics
+
+*   **Autonomous Navigation:** Robots using sensor data to estimate their position (localization) and navigate safely despite noisy sensors and dynamic obstacles.
+*   **Robust Manipulation:** Grasping objects with uncertainty in their exact position or properties.
+*   **Human-Robot Collaboration:** Adapting robot behavior based on uncertain human intentions or actions.
+*   **Exploration:** Deciding where to move next to gain the most information about an unknown environment.
+
+## Code Blocks
+
+Here's a conceptual Python example demonstrating a very simple application of Bayes' Theorem to update a robot's belief about an object's location given a noisy sensor reading.
+
+```python title="simple_bayesian_update.py
+import numpy as np
+
+def bayesian_location_update(prior_belief, likelihood_sensor, sensor_reading_is_positive):
+    """
+    Updates a robot's belief about an object's presence at a location
+    using Bayes' Theorem.
+    
+    :param prior_belief: P(Object_Present) - prior probability of object being present.
+    :param likelihood_sensor: P(Sensor_Positive | Object_Present) - probability of sensor detecting if object IS present.
+                               P(Sensor_Positive | not Object_Present) - probability of sensor detecting if object IS NOT present (false positive rate).
+    :param sensor_reading_is_positive: Boolean, whether the sensor detected something.
+    :return: P(Object_Present | Sensor_Reading) - updated posterior belief.
+    """
+    p_object_present = prior_belief['present']
+    p_object_not_present = prior_belief['not_present']
+
+    p_sensor_pos_given_present = likelihood_sensor['pos_given_present']
+    p_sensor_pos_given_not_present = likelihood_sensor['pos_given_not_present']
+
+    if sensor_reading_is_positive:
+        # P(Sensor_Positive) = P(Sensor_Positive | Present)P(Present) + P(Sensor_Positive | Not_Present)P(Not_Present)
+        p_sensor_positive = (p_sensor_pos_given_present * p_object_present) + \
+                            (p_sensor_pos_given_not_present * p_object_not_present)
+        
+        # P(Present | Sensor_Positive) = [P(Sensor_Positive | Present) * P(Present)] / P(Sensor_Positive)
+        if p_sensor_positive == 0: # Avoid division by zero
+            return 0.0
+        posterior_present = (p_sensor_pos_given_present * p_object_present) / p_sensor_positive
+        return posterior_present
+    else: # Sensor reading is negative
+        # P(Sensor_Negative | Present) = 1 - P(Sensor_Positive | Present)
+        p_sensor_neg_given_present = 1 - p_sensor_pos_given_present
+        # P(Sensor_Negative | Not_Present) = 1 - P(Sensor_Positive | Not_Present)
+        p_sensor_neg_given_not_present = 1 - p_sensor_pos_given_not_present
+
+        # P(Sensor_Negative) = P(Sensor_Negative | Present)P(Present) + P(Sensor_Negative | Not_Present)P(Not_Present)
+        p_sensor_negative = (p_sensor_neg_given_present * p_object_present) + \
+                            (p_sensor_neg_given_not_present * p_object_not_present)
+
+        # P(Present | Sensor_Negative) = [P(Sensor_Negative | Present) * P(Present)] / P(Sensor_Negative)
+        if p_sensor_negative == 0: # Avoid division by zero
+            return 0.0
+        posterior_present = (p_sensor_neg_given_present * p_object_present) / p_sensor_negative
+        return posterior_present
+
+
+if __name__ == "__main__":
+    # Initial belief: 50/50 chance an object is present
+    prior = {'present': 0.5, 'not_present': 0.5}
+
+    # Sensor likelihoods:
+    # If object IS present, 90% chance sensor says positive (true positive)
+    # If object IS NOT present, 10% chance sensor says positive (false positive)
+    sensor_accuracy = {
+        'pos_given_present': 0.9,
+        'pos_given_not_present': 0.1
+    }
+
+    print("--- Bayesian Update for Robot Belief ---")
+
+    # Scenario 1: Sensor detects something
+    print("\nRobot receives a POSITIVE sensor reading:")
+    posterior_positive_reading = bayesian_location_update(prior, sensor_accuracy, True)
+    print(f"Prior belief (object present): {prior['present']:.2f}")
+    print(f"Posterior belief (object present | sensor positive): {posterior_positive_reading:.2f}")
+    # Expected: should increase P(Present)
+
+    # Scenario 2: Sensor detects nothing
+    print("\nRobot receives a NEGATIVE sensor reading:")
+    posterior_negative_reading = bayesian_location_update(prior, sensor_accuracy, False)
+    print(f"Prior belief (object present): {prior['present']:.2f}")
+    print(f"Posterior belief (object present | sensor negative): {posterior_negative_reading:.2f}")
+    # Expected: should decrease P(Present)
+
+    # Example: update belief iteratively
+    current_belief = {'present': 0.1, 'not_present': 0.9} # Initially strongly believe no object
+    print(f"\nIterative update - Initial belief: {current_belief['present']:.2f}")
+    
+    # 1st reading: positive
+    current_belief['present'] = bayesian_location_update(current_belief, sensor_accuracy, True)
+    current_belief['not_present'] = 1 - current_belief['present']
+    print(f"After 1st positive reading: {current_belief['present']:.2f}")
+
+    # 2nd reading: positive
+    current_belief['present'] = bayesian_location_update(current_belief, sensor_accuracy, True)
+    current_belief['not_present'] = 1 - current_belief['present']
+    print(f"After 2nd positive reading: {current_belief['present']:.2f}")

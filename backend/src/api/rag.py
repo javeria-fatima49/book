@@ -1,12 +1,12 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
-from backend.src.models.rag_models import (
+from src.models.rag_models import (
     RagQueryRequest,
     RagQueryResponse,
     UpsertEmbeddingsRequest,
     UpsertEmbeddingsResponse,
 )
-from backend.src.services.rag_service import RagService
+from src.services.rag_service import RagService
 
 logger = logging.getLogger(__name__)
 

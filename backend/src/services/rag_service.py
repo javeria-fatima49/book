@@ -1,12 +1,12 @@
-import openai
+import google.generativeai as genai
 from qdrant_client import models
 from typing import List
 import logging
 from fastapi import HTTPException
 
-from backend.src.core.config import OPENAI_API_KEY
-from backend.src.core.qdrant import get_qdrant_client
-from backend.src.models.rag_models import Source, RagQueryRequest, RagQueryResponse
+from src.core.config import GEMINI_API_KEY # Changed from OPENAI_API_KEY
+from src.core.qdrant import get_qdrant_client
+from src.models.rag_models import Source, RagQueryRequest, RagQueryResponse
 
 logger = logging.getLogger(__name__)
 
@@ -19,31 +19,35 @@ class RagService:
 
     def __init__(self):
         """
-        Initializes the RagService with OpenAI and Qdrant clients,
+        Initializes the RagService with Gemini and Qdrant clients,
         and defines the embedding and LLM models to be used.
         Raises:
-            ValueError: If OPENAI_API_KEY is not set in environment variables.
+            ValueError: If GEMINI_API_KEY is not set in environment variables.
         """
-        if not OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is not set in environment variables.")
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is not set in environment variables.")
 
-        self.openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        genai.configure(api_key=GEMINI_API_KEY)
+        self.gemini_client = genai
         self.qdrant_client = get_qdrant_client()
-        self.embedding_model = "text-embedding-3-small"
-        self.llm_model = "gpt-4"  # Or another suitable LLM
+        self.embedding_model = "models/embedding-001"  # Gemini embedding model
+        self.llm_model = "gemini-pro"  # Gemini LLM for text generation
+        self.llm = genai.GenerativeModel(self.llm_model) # Initialize the GenerativeModel
 
     async def _get_text_embedding(self, text: str) -> List[float]:
         """
-        Generates embeddings for a given text using OpenAI's embedding model.
+        Generates embeddings for a given text using Gemini's embedding model.
         Args:
             text (str): The input text to be embedded.
         Returns:
             List[float]: A list of floats representing the embedding vector.
         """
-        response = await self.openai_client.embeddings.create(
-            input=text, model=self.embedding_model
+        response = await self.gemini_client.embed_content(
+            model=self.embedding_model,
+            content=text,
+            task_type="RETRIEVAL_DOCUMENT" # Specify task type for embeddings
         )
-        return response.data[0].embedding
+        return response['embedding']
 
     async def query_rag(self, request: RagQueryRequest) -> RagQueryResponse:
         """
@@ -92,28 +96,20 @@ class RagService:
         context = "\n\n".join(context_parts)
 
         # 3. Generate answer using LLM
-        messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful assistant that answers questions based on the"
-                    " provided textbook content. Cite your sources by referring to the"
-                    " provided text snippets."
-                ),
-            },
-            {
-                "role": "user",
-                "content": (
-                    f"Context: {context}\n\nQuestion: {request.query}\n\nAnswer:"
-                ),
-            },
+        messages_gemini = [
+            {"role": "user", "parts": [
+                "You are a helpful assistant that answers questions based on the"
+                " provided textbook content. Cite your sources by referring to the"
+                " provided text snippets.",
+                f"Context: {context}",
+                f"Question: {request.query}",
+                "Answer:",
+            ]},
         ]
 
         try:
-            llm_response = await self.openai_client.chat.completions.create(
-                model=self.llm_model, messages=messages, temperature=0.7, max_tokens=500
-            )
-            answer = llm_response.choices[0].message.content.strip()
+            llm_response = await self.llm.generate_content(messages_gemini)
+            answer = llm_response.candidates[0].content.parts[0].text.strip()
         except Exception as e:
             logger.error(f"Error generating LLM response: {e}")
             # Re-raising as HTTPException is handled at API level
@@ -151,13 +147,15 @@ class RagService:
         ]
 
         # Ensure collection exists (or create it if it doesn't)
-        self.qdrant_client.create_collection(
-            collection_name="textbook_embeddings",
-            vectors_config=models.VectorParams(
-                size=1536, distance=models.Distance.COSINE
-            ),
-            on_existent_collection=models.OnExistentCollection.DoNothing,
-        )
+        try:
+            await self.qdrant_client.get_collection(collection_name="textbook_embeddings")
+        except Exception:
+            await self.qdrant_client.create_collection(
+                collection_name="textbook_embeddings",
+                vectors_config=models.VectorParams(
+                    size=768, distance=models.Distance.COSINE # Changed from 1536 to 768 for Gemini
+                ),
+            )
 
         response = await self.qdrant_client.upsert(
             collection_name="textbook_embeddings",

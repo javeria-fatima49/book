@@ -1,0 +1,163 @@
+---
+id: chapter3_2
+title: Task Planning and Motion Planning
+slug: /chapter3_2
+---
+
+## Introduction
+
+For robots to operate effectively in the real world, they must not only know what their goals are but also *how* to achieve them. This involves two closely related yet distinct areas of robot cognition: **Task Planning** and **Motion Planning**. Task planning deals with the high-level sequencing of actions required to complete a complex mission, while motion planning focuses on generating the specific, collision-free paths that a robot's body or manipulator must follow to execute those actions. This chapter explores these foundational concepts, revealing how robots bridge the gap between abstract goals and physical movement.
+
+## Explanation
+
+Task planning and motion planning are critical cognitive functions that transform abstract objectives into concrete actions. They work in tandem, with task planning typically dictating the sequence of operations and motion planning ensuring their safe and efficient execution in the physical space.
+
+### Task Planning
+
+Task planning (or action planning) operates at a symbolic, abstract level. It determines *what* needs to be done and *in what order* to achieve a high-level goal, without worrying about the detailed physical movements.
+
+*   **Inputs:** A description of the initial state of the world, a set of available actions (operators with preconditions and effects), and a desired goal state.
+*   **Output:** A sequence of actions (a plan) that, when executed, transforms the initial state into the goal state.
+*   **Challenges:** Large state spaces, uncertainty in action outcomes, and the need to handle complex logical dependencies between actions.
+*   **Methods:**
+    *   **Classical AI Planning Algorithms:** Such as STRIPS (Stanford Research Institute Problem Solver), PDDL (Planning Domain Definition Language) based planners, and heuristic search algorithms (e.g., A* search applied to states).
+    *   **Hierarchical Task Network (HTN) Planning:** Decomposes complex tasks into smaller, more manageable sub-tasks with pre-defined methods for achieving them. This is often used when tasks have a known structure (e.g., "Assemble_Chair" -> "Attach_Legs" -> "Attach_Seat").
+
+### Motion Planning
+
+Motion planning operates at a geometric and kinematic level. It determines *how* the robot's physical components (e.g., joints, links, end-effector) should move through space to execute a planned action, avoiding collisions with obstacles and respecting kinematic constraints.
+
+*   **Inputs:** Robot's kinematic model, a map of the environment (including obstacles), start configuration, and target configuration (derived from the task plan).
+*   **Output:** A collision-free path (a sequence of robot configurations) from the start to the goal. This path can then be executed by the robot's controllers.
+*   **Configuration Space (C-space):** A key concept where the robot's state is represented by its joint angles (for a manipulator) or position/orientation (for a mobile robot). Obstacles in workspace map to "forbidden regions" in C-space.
+*   **Challenges:** High dimensionality of C-space (many degrees of freedom), complex obstacle geometries, dynamic environments.
+*   **Methods:**
+    *   **Sampling-based Planners:** 
+        *   **Probabilistic Roadmaps (PRM):** Constructs a roadmap of collision-free configurations by randomly sampling points in C-space and connecting them if a collision-free path exists.
+        *   **Rapidly-exploring Random Trees (RRT/RRT*):** Builds a tree-like structure by incrementally exploring the C-space from the start configuration, biasing exploration towards unexplored regions.
+    *   **Grid-based Planners:** Discretizes the environment into a grid and use graph search algorithms (e.g., Dijkstra's, A*) to find paths. Suitable for mobile robots in known environments.
+    *   **Potential Field Methods:** Treat the goal as an attractive force and obstacles as repulsive forces, guiding the robot along a path.
+
+### Integration of Task and Motion Planning
+
+In real-world applications, task and motion planning must be tightly integrated. A high-level task plan might suggest "Pick_Up(BlockA)," but motion planning ensures the robot can physically reach and grasp BlockA without hitting other objects. If motion planning fails for a specific action, the task planner might need to replan or consider alternative strategies.
+
+## Code Blocks
+
+Here's a conceptual Python example illustrating a very simple grid-based motion planner using Breadth-First Search (BFS) for a mobile robot avoiding obstacles.
+
+```python title="simple_grid_motion_planner.py"
+import collections
+
+def bfs_motion_planner(grid, start, goal):
+    """
+    Finds the shortest path in a grid from start to goal, avoiding obstacles.
+    grid: 2D list/array, 0 = free, 1 = obstacle
+    start, goal: tuples (row, col)
+    """
+    rows, cols = len(grid), len(grid[0])
+    queue = collections.deque([(start, [start])]) # (current_pos, path_so_far)
+    visited = {start}
+
+    # Possible moves: (dr, dc) for (up, down, left, right)
+    moves = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+    while queue:
+        current_pos, path = queue.popleft()
+
+        if current_pos == goal:
+            return path
+
+        for dr, dc in moves:
+            next_row, next_col = current_pos[0] + dr, current_pos[1] + dc
+            next_pos = (next_row, next_col)
+
+            # Check boundaries, obstacles, and if already visited
+            if (0 <= next_row < rows and 
+                0 <= next_col < cols and
+                grid[next_row][next_col] == 0 and # Must be a free cell
+                next_pos not in visited):
+                
+                visited.add(next_pos)
+                queue.append((next_pos, path + [next_pos]))
+                
+    return None # No path found
+
+if __name__ == "__main__":
+    # Example grid: 0=free, 1=obstacle
+    # S = Start, G = Goal
+    # [S, 0, 0]
+    # [1, 1, 0]
+    # [0, 0, G]
+    environment_grid = [
+        [0, 0, 0],
+        [1, 1, 0],
+        [0, 0, 0]
+    ]
+    start_point = (0, 0)
+    goal_point = (2, 2)
+
+    print(f"Planning path from {start_point} to {goal_point} in the grid:")
+    for row in environment_grid:
+        print(row)
+
+    path_found = bfs_motion_planner(environment_grid, start_point, goal_point)
+
+    if path_found:
+        print("\nPath found:")
+        for r, c in path_found:
+            print(f" -> ({r}, {c})")
+    else:
+        print("\nNo path found.")
+    
+    # Example with no path
+    environment_grid_no_path = [
+        [0, 0, 0],
+        [1, 1, 1], # Blocked
+        [0, 0, 0]
+    ]
+    print(f"\nPlanning path from {start_point} to {goal_point} in a blocked grid:")
+    for row in environment_grid_no_path:
+        print(row)
+    path_no_path = bfs_motion_planner(environment_grid_no_path, start_point, goal_point)
+    if path_no_path:
+        print("\nPath found:", path_no_path)
+    else:
+        print("\nNo path found in blocked grid.")
+```
+
+## Conclusion
+
+Task planning and motion planning are indispensable cognitive abilities for autonomous robots, enabling them to bridge the gap between abstract goals and physical execution. Task planners orchestrate the sequence of actions, while motion planners ensure these actions are carried out safely and efficiently through complex environments. The seamless integration of these two levels of planning is crucial for robots to achieve sophisticated behaviors, from navigating crowded spaces to performing intricate assembly operations, thereby unlocking their full potential in real-world applications.
+
+## Multiple Choice Questions
+
+1.  What is the primary focus of **Task Planning**?
+    a) Generating collision-free paths for a robot's joints.
+    b) Determining the high-level sequence of actions to achieve a goal.
+    c) Calculating the forces and torques acting on a robot.
+    d) Fusing data from multiple sensors.
+
+2.  Which concept represents the robot's state by its joint angles or position/orientation in motion planning?
+    a) Workspace
+    b) Actuator space
+    c) Sensor space
+    d) Configuration Space (C-space)
+
+3.  What is a common method used in sampling-based motion planning?
+    a) Breadth-First Search (BFS)
+    b) Probabilistic Roadmaps (PRM)
+    c) Classical AI planning with PDDL
+    d) Kalman Filters
+
+4.  If a task planner suggests "Pick_Up(BlockA)," what is the role of motion planning in this scenario?
+    a) To determine if BlockA is the correct object.
+    b) To ensure the robot can physically reach and grasp BlockA without collisions.
+    c) To decide when to pick up BlockA relative to other tasks.
+    d) To report the weight of BlockA.
+
+5.  In the `simple_grid_motion_planner.py` example, what does a value of `1` in the `environment_grid` represent?
+    a) The robot's starting position.
+    b) A free space the robot can move through.
+    c) An obstacle the robot must avoid.
+    d) The robot's goal position.

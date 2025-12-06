@@ -18,7 +18,6 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Module 1: The Robotic Nervous System (ROS 2)',
       items: [
-        'part1-foundations/intro',
         'part1-foundations/chapter1',
         'part1-foundations/chapter2',
         'part1-foundations/chapter3',
@@ -30,7 +29,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Module 2: The Digital Twin (Gazebo & Unity)',
       items: [
-        'part2-perception/chapter2',
+        'part2-perception/chapter2-1',
         'part2-perception/chapter2_2',
         'part2-perception/chapter2_3',
         'part2-perception/chapter2_4',
@@ -41,7 +40,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Module 3: The AI-Robot Brain (NVIDIA Isaac™)',
       items: [
-        'part3-cognition/chapter3',
+        'part3-cognition/chapter3-1',
         'part3-cognition/chapter3_2',
         'part3-cognition/chapter3_3',
         'part3-cognition/chapter3_4',

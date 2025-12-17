@@ -23,7 +23,7 @@ class TranslationService:
         self.redis_client = get_redis_client()
         genai.configure(api_key=GEMINI_API_KEY)
         self.gemini_client = genai
-        self.llm_model = "gemini-pro"
+        self.llm_model = "gemini-1.5-flash"  # Updated Gemini LLM for text generation
         self.llm = genai.GenerativeModel(self.llm_model)
 
     async def _call_ai_translation_service(

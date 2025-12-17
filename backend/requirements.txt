@@ -10,3 +10,7 @@ requests
 black
 ruff
 google-generativeai
+cohere
+sqlalchemy
+asyncpg
+psycopg2-binary

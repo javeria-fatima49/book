@@ -1,138 +1,317 @@
 ---
-id: chapter3_4
-title: Robot Decision Making under Uncertainty
-slug: /chapter3_4
+id: module3-chapter3
+title: Chapter 3 - Nav2 Path Planning for Bipedal Humanoid Movement
+slug: /module3-chapter3
 ---
+
+# Chapter 3: Nav2 - Path Planning for Bipedal Humanoid Movement
 
 ## Introduction
 
-The real world is rarely predictable. Robots often operate with imperfect information, facing noisy sensor readings, uncertain actuator effects, and dynamic environments where outcomes are not guaranteed. For a robot to function intelligently and reliably in such conditions, it must be capable of making robust decisions **under uncertainty**. This chapter explores the fundamental concepts and techniques that enable robots to reason probabilistically and make optimal choices even when faced with incomplete or unreliable information.
+Navigation2 (Nav2) represents the state-of-the-art navigation framework for ROS 2, providing sophisticated path planning and execution capabilities for mobile robots. For bipedal humanoid robots, Nav2 requires specialized adaptations to account for the unique kinematic constraints, balance requirements, and locomotion patterns that distinguish legged locomotion from wheeled or tracked systems. This chapter explores the implementation of Nav2 for humanoid robots, addressing the specific challenges of bipedal navigation and the integration of human-like movement patterns.
 
 ## Explanation
 
-Decision-making under uncertainty is a core challenge in AI robotics. It involves formalizing uncertainty, predicting probabilistic outcomes, and selecting actions that maximize expected utility or minimize risk. This is a departure from classical AI planning, which assumes a perfectly known and deterministic world.
+Traditional Nav2 implementations assume wheeled or holonomic robot platforms with relatively simple kinematic constraints. Bipedal humanoid robots present unique challenges including limited turning radius, balance constraints, step-based locomotion, and the need for dynamic balance control. These requirements necessitate modifications to standard path planning algorithms, costmap representations, and local planning strategies to generate trajectories that the humanoid robot can safely execute while maintaining stability.
 
-### Sources of Uncertainty
+### Bipedal Navigation Challenges
 
-*   **Perceptual Uncertainty:** Sensors are inherently noisy and provide incomplete information. A robot might "see" an object, but its exact position or identity might be ambiguous.
-*   **Actuator Uncertainty:** Robot actions do not always produce their intended effects precisely. Motors might overshoot, grippers might slip, or movements might be slightly off.
-*   **Environmental Uncertainty:** The world itself is dynamic and unpredictable. Objects might move, new obstacles might appear, or tasks might change.
-*   **Model Uncertainty:** The robot's internal model of the world or its own dynamics might be incomplete or inaccurate.
+Humanoid robots face specific navigation challenges:
+- **Balance Constraints**: Maintaining center of mass within support polygon
+- **Step-Based Locomotion**: Discrete foot placements rather than continuous motion
+- **Limited Mobility**: Restricted turning and lateral movement compared to wheeled robots
+- **Dynamic Stability**: Requirement for continuous motion to maintain balance
+- **Footstep Planning**: Coordination of foot placement with path following
 
-### Probabilistic Reasoning
+### Nav2 Architecture for Humanoids
 
-To handle uncertainty, robots often employ probabilistic reasoning, using probability theory to represent and manipulate uncertain knowledge.
+Adapting Nav2 for humanoid platforms requires modifications to:
+- **Costmap Representation**: Integration of terrain traversability for bipedal locomotion
+- **Global Planner**: Path optimization considering humanoid kinematic constraints
+- **Local Planner**: Dynamic trajectory generation for stable bipedal motion
+- **Controller Server**: Gait-specific control algorithms for legged locomotion
+- **Recovery Behaviors**: Humanoid-specific recovery actions for navigation failures
 
-*   **Bayes' Theorem:** A fundamental tool for updating beliefs (probabilities) in light of new evidence. It allows robots to infer the probability of a state given new sensor observations.
-    *   `P(A|B) = [P(B|A) * P(A)] / P(B)` where `P(A|B)` is the posterior probability, `P(B|A)` is the likelihood, `P(A)` is the prior probability, and `P(B)` is the evidence.
-*   **Bayesian Networks:** Graphical models that represent probabilistic relationships among a set of variables. They are used for encoding complex dependencies and performing inference.
+### Footstep Planning Integration
 
-### Decision-Making Frameworks
+Specialized planning considerations include:
+- **Terrain Analysis**: Assessment of ground stability and obstacle clearance
+- **Footstep Sequences**: Generation of stable foot placement patterns
+- **ZMP Control**: Zero Moment Point maintenance during walking
+- **Dynamic Balance**: Integration with balance controllers during navigation
 
-*   **Decision Trees:** A flowchart-like structure where each internal node represents a test on an attribute, each branch represents an outcome of the test, and each leaf node represents a decision. Useful for classification and sequential decision problems.
-*   **Markov Decision Processes (MDPs):** A mathematical framework for modeling sequential decision making in situations where outcomes are partly random and partly under the control of a decision maker.
-    *   **Components:** States, Actions, Transition Probabilities (P(s'|s,a)), Rewards (R(s,a,s')), and a Discount Factor.
-    *   **Goal:** Find an optimal policy (a mapping from states to actions) that maximizes the expected cumulative discounted reward over time.
-    *   **Solutions:** Value Iteration, Policy Iteration.
-*   **Partially Observable Markov Decision Processes (POMDPs):** An extension of MDPs for situations where the agent does not know the exact state of the environment but only receives observations that depend on the state. This introduces uncertainty about the current state, which the robot must maintain as a probability distribution (belief state).
-    *   **Challenges:** Computationally very complex, often requiring approximations.
+### Humanoid-Specific Navigation Components
 
-### Applications in Robotics
-
-*   **Autonomous Navigation:** Robots using sensor data to estimate their position (localization) and navigate safely despite noisy sensors and dynamic obstacles.
-*   **Robust Manipulation:** Grasping objects with uncertainty in their exact position or properties.
-*   **Human-Robot Collaboration:** Adapting robot behavior based on uncertain human intentions or actions.
-*   **Exploration:** Deciding where to move next to gain the most information about an unknown environment.
+Key adaptations include:
+- **Bipedal Controllers**: Gait generators for stable walking patterns
+- **Balance Monitors**: Real-time stability assessment during navigation
+- **Step Adjustment**: Dynamic modification of footstep plans based on terrain
+- **Recovery Actions**: Humanoid-specific behaviors for obstacle avoidance
 
 ## Code Blocks
 
-Here's a conceptual Python example demonstrating a very simple application of Bayes' Theorem to update a robot's belief about an object's location given a noisy sensor reading.
+Here's an example of how to configure and implement Nav2 for a bipedal humanoid robot:
 
-```python title="simple_bayesian_update.py
-import numpy as np
+```yaml title="humanoid_nav2_config.yaml"
+amcl:
+  ros__parameters:
+    use_sim_time: True
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: "base_link"
+    beam_skip_distance: 0.5
+    beam_skip_error_threshold: 0.9
+    beam_skip_threshold: 0.3
+    do_beamskip: false
+    global_frame_id: "map"
+    lambda_short: 0.1
+    laser_likelihood_max_dist: 2.0
+    laser_max_range: 100.0
+    laser_min_range: -1.0
+    laser_model_type: "likelihood_field"
+    max_beams: 60
+    max_particles: 2000
+    min_particles: 500
+    odom_frame_id: "odom"
+    pf_err: 0.05
+    pf_z: 0.99
+    recovery_alpha_fast: 0.0
+    recovery_alpha_slow: 0.0
+    resample_interval: 1
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    save_pose_rate: 0.5
+    sigma_hit: 0.2
+    tf_broadcast: true
+    transform_tolerance: 1.0
+    update_min_a: 0.2
+    update_min_d: 0.25
+    z_hit: 0.5
+    z_max: 0.05
+    z_rand: 0.5
+    z_short: 0.05
 
-def bayesian_location_update(prior_belief, likelihood_sensor, sensor_reading_is_positive):
-    """
-    Updates a robot's belief about an object's presence at a location
-    using Bayes' Theorem.
+amcl_map_client:
+  ros__parameters:
+    use_sim_time: True
+
+amcl_rclcpp_node:
+  ros__parameters:
+    use_sim_time: True
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: True
+    global_frame: "map"
+    robot_base_frame: "base_link"
+    odom_topic: "/odom"
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    enable_groot_monitoring: True
+    groot_zmq_publisher_port: 1666
+    groot_zmq_server_port: 1667
+    # Note: Use a behavior tree customized for humanoid robots
+    default_bt_xml_filename: "humanoid_navigator_bt.xml"
+    plugin_lib_names:
+    - nav2_compute_path_to_pose_action_bt_node
+    - nav2_follow_path_action_bt_node
+    - nav2_back_up_action_bt_node
+    - nav2_spin_action_bt_node
+    - nav2_wait_action_bt_node
+    - nav2_clear_entirely_costmap_service_bt_node
+    - nav2_is_stuck_condition_bt_node
+    - nav2_goal_reached_condition_bt_node
+    - nav2_goal_updated_condition_bt_node
+    - nav2_initial_pose_received_condition_bt_node
+    - nav2_reinitialize_global_localization_service_bt_node
+    - nav2_rate_controller_bt_node
+    - nav2_distance_controller_bt_node
+    - nav2_speed_controller_bt_node
+    - nav2_truncate_path_action_bt_node
+    - nav2_goal_updater_node_bt_node
+    - nav2_recovery_node_bt_node
+    - nav2_pipeline_sequence_bt_node
+    - nav2_round_robin_node_bt_node
+    - nav2_transform_available_condition_bt_node
+    - nav2_time_expired_condition_bt_node
+    - nav2_path_expiring_timer_condition
+    - nav2_distance_traveled_condition_bt_node
+    - nav2_single_trigger_bt_node
+    - nav2_is_battery_low_condition_bt_node
+    - nav2_navigate_through_poses_action_bt_node
+    - nav2_navigate_to_pose_action_bt_node
+    - nav2_remove_passed_goals_action_bt_node
+    - nav2_planner_selector_bt_node
+    - nav2_controller_selector_bt_node
+    - nav2_goal_checker_selector_bt_node
+
+bt_navigator_rclcpp_node:
+  ros__parameters:
+    use_sim_time: True
+
+controller_server:
+  ros__parameters:
+    use_sim_time: True
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    # Humanoid-specific controller
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugin: "goal_checker"
+    controller_plugins: ["HumanoidController"]
     
-    :param prior_belief: P(Object_Present) - prior probability of object being present.
-    :param likelihood_sensor: P(Sensor_Positive | Object_Present) - probability of sensor detecting if object IS present.
-                               P(Sensor_Positive | not Object_Present) - probability of sensor detecting if object IS NOT present (false positive rate).
-    :param sensor_reading_is_positive: Boolean, whether the sensor detected something.
-    :return: P(Object_Present | Sensor_Reading) - updated posterior belief.
-    """
-    p_object_present = prior_belief['present']
-    p_object_not_present = prior_belief['not_present']
+    # Humanoid controller specific parameters
+    HumanoidController:
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 50
+      model_dt: 0.05
+      batch_size: 1000
+      vx_std: 0.2
+      vy_std: 0.1
+      wz_std: 0.2
+      vx_max: 0.5
+      vx_min: -0.2
+      vy_max: 0.2
+      vy_min: -0.2
+      wz_max: 0.5
+      iteration_count: 1
+      motion_model: "HumanoidMotionModel"
+      trajectory_visualization: True
+      # Humanoid-specific parameters
+      step_size: 0.3
+      step_duration: 0.8
+      balance_margin: 0.1
 
-    p_sensor_pos_given_present = likelihood_sensor['pos_given_present']
-    p_sensor_pos_given_not_present = likelihood_sensor['pos_given_not_present']
+controller_server_rclcpp_node:
+  ros__parameters:
+    use_sim_time: True
 
-    if sensor_reading_is_positive:
-        # P(Sensor_Positive) = P(Sensor_Positive | Present)P(Present) + P(Sensor_Positive | Not_Present)P(Not_Present)
-        p_sensor_positive = (p_sensor_pos_given_present * p_object_present) + \
-                            (p_sensor_pos_given_not_present * p_object_not_present)
-        
-        # P(Present | Sensor_Positive) = [P(Sensor_Positive | Present) * P(Present)] / P(Sensor_Positive)
-        if p_sensor_positive == 0: # Avoid division by zero
-            return 0.0
-        posterior_present = (p_sensor_pos_given_present * p_object_present) / p_sensor_positive
-        return posterior_present
-    else: # Sensor reading is negative
-        # P(Sensor_Negative | Present) = 1 - P(Sensor_Positive | Present)
-        p_sensor_neg_given_present = 1 - p_sensor_pos_given_present
-        # P(Sensor_Negative | Not_Present) = 1 - P(Sensor_Positive | Not_Present)
-        p_sensor_neg_given_not_present = 1 - p_sensor_pos_given_not_present
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: "odom"
+      robot_base_frame: "base_link"
+      use_sim_time: True
+      rolling_window: true
+      width: 6
+      height: 6
+      resolution: 0.05
+      robot_radius: 0.35  # Larger radius for humanoid safety
+      plugins: ["voxel_layer", "inflation_layer"]
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.75
+        cost_scaling_factor: 3.0
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: True
+        publish_voxel_map: True
+        origin_z: 0.0
+        z_resolution: 0.2
+        z_voxels: 8
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+  local_costmap_client:
+    ros__parameters:
+      use_sim_time: True
+  local_costmap_rclcpp_node:
+    ros__parameters:
+      use_sim_time: True
 
-        # P(Sensor_Negative) = P(Sensor_Negative | Present)P(Present) + P(Sensor_Negative | Not_Present)P(Not_Present)
-        p_sensor_negative = (p_sensor_neg_given_present * p_object_present) + \
-                            (p_sensor_neg_given_not_present * p_object_not_present)
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: "map"
+      robot_base_frame: "base_link"
+      use_sim_time: True
+      robot_radius: 0.35
+      resolution: 0.05
+      track_unknown_space: false
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 1.0
+        cost_scaling_factor: 3.0
+  global_costmap_client:
+    ros__parameters:
+      use_sim_time: True
+  global_costmap_rclcpp_node:
+    ros__parameters:
+      use_sim_time: True
 
-        # P(Present | Sensor_Negative) = [P(Sensor_Negative | Present) * P(Present)] / P(Sensor_Negative)
-        if p_sensor_negative == 0: # Avoid division by zero
-            return 0.0
-        posterior_present = (p_sensor_neg_given_present * p_object_present) / p_sensor_negative
-        return posterior_present
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: True
+    # Use a planner adapted for humanoid kinematics
+    planner_plugins: ["GridBasedHumanoidPlanner"]
+    GridBasedHumanoidPlanner:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+      # Humanoid-specific planning parameters
+      step_spacing: 0.1  # Smaller steps for precise humanoid navigation
+      min_distance_to_obstacle: 0.4  # Larger safety margin for humanoid
 
+planner_server_rclcpp_node:
+  ros__parameters:
+    use_sim_time: True
 
-if __name__ == "__main__":
-    # Initial belief: 50/50 chance an object is present
-    prior = {'present': 0.5, 'not_present': 0.5}
-
-    # Sensor likelihoods:
-    # If object IS present, 90% chance sensor says positive (true positive)
-    # If object IS NOT present, 10% chance sensor says positive (false positive)
-    sensor_accuracy = {
-        'pos_given_present': 0.9,
-        'pos_given_not_present': 0.1
-    }
-
-    print("--- Bayesian Update for Robot Belief ---")
-
-    # Scenario 1: Sensor detects something
-    print("\nRobot receives a POSITIVE sensor reading:")
-    posterior_positive_reading = bayesian_location_update(prior, sensor_accuracy, True)
-    print(f"Prior belief (object present): {prior['present']:.2f}")
-    print(f"Posterior belief (object present | sensor positive): {posterior_positive_reading:.2f}")
-    # Expected: should increase P(Present)
-
-    # Scenario 2: Sensor detects nothing
-    print("\nRobot receives a NEGATIVE sensor reading:")
-    posterior_negative_reading = bayesian_location_update(prior, sensor_accuracy, False)
-    print(f"Prior belief (object present): {prior['present']:.2f}")
-    print(f"Posterior belief (object present | sensor negative): {posterior_negative_reading:.2f}")
-    # Expected: should decrease P(Present)
-
-    # Example: update belief iteratively
-    current_belief = {'present': 0.1, 'not_present': 0.9} # Initially strongly believe no object
-    print(f"\nIterative update - Initial belief: {current_belief['present']:.2f}")
-    
-    # 1st reading: positive
-    current_belief['present'] = bayesian_location_update(current_belief, sensor_accuracy, True)
-    current_belief['not_present'] = 1 - current_belief['present']
-    print(f"After 1st positive reading: {current_belief['present']:.2f}")
-
-    # 2nd reading: positive
-    current_belief['present'] = bayesian_location_update(current_belief, sensor_accuracy, True)
-    current_belief['not_present'] = 1 - current_belief['present']
-    print(f"After 2nd positive reading: {current_belief['present']:.2f}")
+recoveries_server:
+  ros__parameters:
+    costmap_topic: "local_costmap/costmap_raw"
+    footprint_topic: "local_costmap/published_footprint"
+    cycle_frequency: 10.0
+    recovery_plugins: ["spin", "backup", "wait"]
+    recovery_plugin_types: ["nav2_recoveries::Spin", "nav2_recoveries::BackUp", "nav2_recoveries::Wait"]
+    spin:
+      plugin: "nav2_recoveries::Spin"
+      # Humanoid-specific recovery parameters
+      min_duration: 5.0
+      max_rotation_attempts: 10
+      rotation_speed: 0.4
+    backup:
+      plugin: "nav2_recoveries::BackUp"
+      # Humanoid-specific backup parameters
+      backup_dist: -0.3  # Humanoid can only back up slightly
+      backup_speed: 0.05
+    wait:
+      plugin: "nav2_recoveries::Wait"
+      # Humanoid-specific wait parameters
+      sleep_duration: 2.0

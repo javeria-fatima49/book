@@ -1,127 +1,41 @@
 ---
-id: chapter4
-title: Robot Kinematics and Dynamics
-slug: /chapter4
+id: module1-intro
+title: Module 1 - The Robotic Nervous System (ROS 2)
+slug: /module1-intro
 ---
 
-## Introduction
+# Module 1: The Robotic Nervous System (ROS 2)
 
-To effectively design, control, and program robots, a deep understanding of their movement capabilities is essential. This is where kinematics and dynamics come into play. Kinematics describes the motion of robots without considering the forces and torques that cause the motion, while dynamics analyzes the forces and torques that produce specific movements. This chapter will introduce these foundational mathematical concepts, crucial for predicting and controlling robot behavior.
+## Overview
 
-## Explanation
+ROS 2 (Robot Operating System 2) serves as the middleware framework that enables communication and coordination between different components of robotic systems. Much like the nervous system in biological organisms, ROS 2 provides the essential connectivity that allows various robot subsystems to exchange information and work together harmoniously. This module explores the fundamental concepts of ROS 2 architecture and its role as the central nervous system of modern robotic platforms.
 
-Kinematics and dynamics form the mathematical backbone of robotics, enabling engineers to model, simulate, and ultimately control the complex movements of robotic systems. From calculating the precise position of a robot's end-effector to ensuring it moves smoothly without toppling, these principles are indispensable.
+## Learning Objectives
 
-### Robot Kinematics
+By the end of this module, students will be able to:
 
-Kinematics deals with the geometric aspects of motion. In robotics, it primarily focuses on the relationship between the joint angles of a robot manipulator and the position and orientation of its end-effector.
+- Understand the architecture and design philosophy of ROS 2
+- Implement nodes, topics, and services for inter-process communication
+- Bridge Python-based AI agents with ROS 2 controllers
+- Apply Unified Robot Description Format (URDF) for humanoid robot modeling
 
-*   **Forward Kinematics:** This involves calculating the end-effector's position and orientation in space given the values of all joint angles. It's like knowing all the limb angles of a human and figuring out where their hand is.
-    *   Typically uses transformation matrices (e.g., Denavit-Hartenberg parameters) to describe the relative position and orientation of each link in a kinematic chain.
-*   **Inverse Kinematics:** This is a more complex and often more practical problem. Given a desired position and orientation for the end-effector, inverse kinematics calculates the corresponding joint angles required to achieve that pose. This is essential for task-oriented programming, where a robot needs to reach a specific point in space.
-    *   Can have multiple solutions (redundancy), no solutions (reachability limits), or singularities (loss of degrees of freedom).
+## Module Structure
 
-### Robot Dynamics
+This module is organized into the following chapters:
 
-Dynamics, on the other hand, considers the forces and torques that cause motion. It's about understanding how a robot interacts with its environment physically, taking into account mass, inertia, and external forces.
+1. ROS 2 Nodes, Topics, and Services
+2. Bridging Python Agents to ROS controllers using rclpy
+3. Understanding URDF (Unified Robot Description Format) for humanoids
 
-*   **Lagrangian and Newton-Euler Formulations:** These are common approaches to derive the equations of motion for a robot.
-    *   **Lagrangian Dynamics:** Based on energy (kinetic and potential), often simpler for complex systems.
-    *   **Newton-Euler Dynamics:** Based on force and momentum, more intuitive for individual links.
-*   **Control Implications:** Dynamic models are vital for designing advanced robot controllers that can compensate for gravity, friction, and inertial effects, leading to smoother and more accurate movements. They are also critical for understanding the forces a robot can exert or withstand.
+ROS 2 represents a significant evolution from its predecessor, addressing critical requirements for production-grade robotic systems including improved security, real-time capabilities, and distributed computing. Its flexible pub/sub messaging system creates a powerful abstraction layer that enables complex robotic behaviors while maintaining modularity and scalability.
 
-### Trajectory Planning
+The middleware implements a distributed pub/sub messaging system that allows processes to communicate transparently regardless of their physical location on the same machine or across networks. This architectural flexibility is crucial for humanoid robots that require coordinated control of dozens of sensors and actuators simultaneously.
 
-Building upon kinematics and dynamics, trajectory planning involves generating a smooth path in space for the robot to follow from a starting point to a destination. This includes defining the sequence of poses (positions and orientations) and the timing (velocities and accelerations) for each joint, ensuring the robot avoids obstacles and operates within its physical limits.
+## Key Concepts
 
-## Code Blocks
+- **Middleware Abstraction**: ROS 2 provides standardized interfaces between robot hardware and software components
+- **Real-time Communication**: Low-latency messaging for responsive robot behaviors
+- **Component Modularity**: Independent development and integration of robot subsystems
+- **Hardware Agnosticism**: Same software stack across different robot platforms
 
-Here's a conceptual Python example illustrating a very simplified forward kinematics for a 2-DOF (degree-of-freedom) planar robot arm.
-
-```python title="simple_forward_kinematics.py"
-import math
-
-def forward_kinematics_2dof(l1, l2, theta1_deg, theta2_deg):
-    """
-    Calculates the end-effector position (x, y) for a 2-DOF planar robot arm.
-
-    Args:
-        l1 (float): Length of the first link.
-        l2 (float): Length of the second link.
-        theta1_deg (float): Angle of the first joint in degrees.
-        theta2_deg (float): Angle of the second joint relative to the first link in degrees.
-
-    Returns:
-        tuple: (x, y) coordinates of the end-effector.
-    """
-    # Convert angles from degrees to radians
-    theta1_rad = math.radians(theta1_deg)
-    theta2_rad = math.radians(theta2_deg)
-
-    # Calculate x and y coordinates
-    x = l1 * math.cos(theta1_rad) + l2 * math.cos(theta1_rad + theta2_rad)
-    y = l1 * math.sin(theta1_rad) + l2 * math.sin(theta1_rad + theta2_rad)
-
-    return (x, y)
-
-if __name__ == "__main__":
-    link1_length = 1.0  # meters
-    link2_length = 0.8  # meters
-
-    # Example 1: Arm fully extended horizontally
-    joint1_angle_deg = 0
-    joint2_angle_deg = 0
-    ee_pos = forward_kinematics_2dof(link1_length, link2_length, joint1_angle_deg, joint2_angle_deg)
-    print(f"Joint angles: ({joint1_angle_deg}°, {joint2_angle_deg}°)")
-    print(f"End-effector position: x={ee_pos[0]:.2f}, y={ee_pos[1]:.2f}\n") # Expected: x=1.80, y=0.00
-
-    # Example 2: Arm bent upwards
-    joint1_angle_deg = 45
-    joint2_angle_deg = -30
-    ee_pos = forward_kinematics_2dof(link1_length, link2_length, joint1_angle_deg, joint2_angle_deg)
-    print(f"Joint angles: ({joint1_angle_deg}°, {joint2_angle_deg}°)")
-    print(f"End-effector position: x={ee_pos[0]:.2f}, y={ee_pos[1]:.2f}\n")
-
-    # Example 3: Arm in a vertical configuration
-    joint1_angle_deg = 90
-    joint2_angle_deg = 0
-    ee_pos = forward_kinematics_2dof(link1_length, link2_length, joint1_angle_deg, joint2_angle_deg)
-    print(f"Joint angles: ({joint1_angle_deg}°, {joint2_angle_deg}°)")
-    print(f"End-effector position: x={ee_pos[0]:.2f}, y={ee_pos[1]:.2f}\n") # Expected: x=0.00, y=1.80
-```
-
-## Conclusion
-
-Robot kinematics and dynamics are fundamental disciplines that provide the mathematical framework for understanding and controlling robot motion. From mapping joint angles to end-effector positions (kinematics) to analyzing the forces and torques influencing movement (dynamics), these concepts are critical for developing efficient, precise, and stable robotic systems. As robots become more ubiquitous and complex, a solid grasp of these principles will remain paramount for advancing the field.
-
-## Multiple Choice Questions
-
-1.  Which concept describes the motion of a robot without considering the forces and torques that cause it?
-    a) Dynamics
-    b) Kinematics
-    c) Actuation
-    d) Perception
-
-2.  What does Forward Kinematics calculate?
-    a) Joint angles given end-effector position
-    b) End-effector position given joint angles
-    c) Forces applied by the end-effector
-    d) Optimal robot trajectory
-
-3.  Which of the following is often a more complex problem to solve in robotics?
-    a) Forward Kinematics
-    b) Inverse Kinematics
-    c) Robot sensing
-    d) Actuator selection
-
-4.  Robot dynamics is crucial for designing controllers that can compensate for:
-    a) Sensory noise
-    b) Visual object recognition
-    c) Gravity, friction, and inertial effects
-    d) Communication delays
-
-5.  What can inverse kinematics solutions sometimes exhibit, making them challenging?
-    a) Only one unique solution
-    b) Always a direct, simple calculation
-    c) Multiple solutions, no solutions, or singularities
-    d) Independence from joint limits
+This foundational module establishes the communication backbone necessary for advanced robotic systems, enabling seamless integration of perception, planning, and control capabilities in humanoid robotics.

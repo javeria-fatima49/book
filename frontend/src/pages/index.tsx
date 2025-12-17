@@ -6,6 +6,8 @@ import Layout from '@theme/Layout';
 // import HomepageFeatures from '@site/src/components/HomepageFeatures';
 // import UrduTranslateButton from '@site/src/components/UrduTranslateButton';
 import Heading from '@theme/Heading';
+import { PersonalizationProvider } from '../contexts/PersonalizationContext';
+// import PersonalizationPanel from '../components/PersonalizationPanel';
 
 import styles from './index.module.css';
 
@@ -24,9 +26,9 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/docs/chapter1"
+            to="/docs/module1-chapter1"
           >
-            Strat Reading ⏱️
+            Strat Reading 📖
           </Link>
         </div>
       </div>
@@ -37,15 +39,18 @@ function HomepageHeader() {
 export default function Home(): ReactNode {
   const { siteConfig } = useDocusaurusContext();
   return (
-    <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />"
-    >
-      <HomepageHeader />
-      {/* <UrduTranslateButton backendApiUrl={siteConfig.customFields?.backendApiUrl as string || 'http://localhost:8000'} /> */}
-      <main id="docusaurus-main-content">
-        {/* <HomepageFeatures /> */}
-      </main>
-    </Layout>
+    <PersonalizationProvider>
+      <Layout
+        title={`Hello from ${siteConfig.title}`}
+        description="Description will go into a meta tag in <head />"
+      >
+        <HomepageHeader />
+        {/* <UrduTranslateButton backendApiUrl={siteConfig.customFields?.backendApiUrl as string || 'http://localhost:8000'} /> */}
+        <main id="docusaurus-main-content">
+          {/* <HomepageFeatures /> */}
+        </main>
+        {/* <PersonalizationPanel /> */}
+      </Layout>
+    </PersonalizationProvider>
   );
 }

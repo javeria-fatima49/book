@@ -1,63 +1,282 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* Custom CSS for the AI Book application */
 
-/* You can override the default Infima variables here. */
-:root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+/* General Form Styling */
+.auth-form-container {
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
-[data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+.auth-form-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
-.chat-history {
-  height: 400px; /* or any desired height */
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
+.auth-form-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0;
 }
 
-.chat-message {
-  margin-bottom: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 80%;
+.auth-form-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
 }
 
-.chat-message.user {
-  background-color: #e6e6e6;
-  align-self: flex-end;
-  margin-left: auto;
+.auth-form-error-message {
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-radius: 0.5rem;
 }
 
-.chat-message.ai {
-  background-color: #f0f0f0;
-  align-self: flex-start;
-  margin-right: auto;
+.auth-form {
+  margin-top: 2rem;
 }
 
-.chat-sources {
-  font-size: 0.8em;
-  color: #555;
-  margin-top: 5px;
+.auth-form-fields {
+  margin-bottom: 1.5rem;
+}
+
+.auth-form-fieldset {
+  margin-bottom: 1rem;
+}
+
+.auth-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.auth-input-group {
+  position: relative;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.auth-input.error {
+  border-color: #ef4444;
+}
+
+.auth-input-password {
+  padding-right: 3rem;
+}
+
+.auth-input-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.auth-form-error {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.auth-checkbox-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.auth-checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+.auth-checkbox-label {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.auth-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.auth-button-primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.auth-button-primary:hover {
+  background-color: #2563eb;
+}
+
+.auth-button-primary:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.auth-button-secondary {
+  background-color: white;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.auth-button-secondary:hover {
+  background-color: #f3f4f6;
+}
+
+.auth-links {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 1rem;
+}
+
+.auth-link {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+/* Multi-step Form Specific Styles */
+.multi-step-progress {
+  margin-bottom: 2rem;
+}
+
+.multi-step-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.multi-step-step {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.multi-step-step.active {
+  color: #2563eb;
+}
+
+.multi-step-bar {
+  width: 100%;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.multi-step-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  width: 0%;
+  transition: width 0.3s ease-in-out;
+  border-radius: 0.25rem;
+}
+
+.multi-step-navigation {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1rem;
+}
+
+.multi-step-spacer {
+  flex: 1;
+}
+
+/* Spinner Animation */
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dashboard Styles */
+.dashboard-container {
+  width: 100%;
+  max-width: 50rem;
+  margin: 3rem auto;
+  padding: 2rem;
+}
+
+.dashboard-card {
+  max-width: 48rem;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.dashboard-title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-user-info {
+  margin-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media (min-width: 640px) {
+  .auth-form-container {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .auth-form-container {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+  
+  .auth-form-title {
+    font-size: 1.5rem;
+  }
 }

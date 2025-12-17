@@ -1,84 +1,160 @@
 ---
-id: chapter1
-title: Introduction to AI Robotics
-slug: /chapter1
+id: module1-chapter1
+title: Chapter 1 - ROS 2 Nodes, Topics, and Services
+slug: /module1-chapter1
 ---
+
+# Chapter 1: ROS 2 Nodes, Topics, and Services
 
 ## Introduction
 
-Welcome to the first chapter of "Physical AI & Humanoid Robotics"! In this chapter, we will introduce the fascinating field of AI robotics, exploring its history, key concepts, and future potential.
+ROS 2 (Robot Operating System 2) represents the next-generation middleware framework for robotics development, providing the foundational communication infrastructure that enables complex robotic systems to function cohesively. As the robotic nervous system, ROS 2 implements a distributed pub/sub messaging architecture that facilitates seamless communication between diverse robot subsystems. This chapter examines the core architectural components of ROS 2: nodes, topics, and services, which form the essential building blocks for creating robust, scalable robotic applications.
 
 ## Explanation
 
-AI robotics combines artificial intelligence with robotics, allowing machines to perceive their environment, learn, make decisions, and perform actions autonomously. This interdisciplinary field draws from computer science, engineering, and cognitive science.
+The ROS 2 architecture centers on three primary communication patterns that enable different types of robot interactions. Nodes serve as independent processes that perform specific functions, topics facilitate data streaming through publish/subscribe mechanisms, and services enable request/response interactions for discrete operations. This architecture reflects the biological analogy of a nervous system where different neural pathways handle continuous sensory streams, discrete commands, and coordinated responses.
 
-### Key Concepts
+### Nodes in ROS 2
 
--   **Perception:** Robots use sensors (cameras, lidar, microphones) to gather data about their surroundings.
--   **Cognition:** AI algorithms process perceived data, learn patterns, and make intelligent decisions.
--   **Manipulation:** Robotic effectors (arms, grippers) interact with the physical world.
--   **Locomotion:** Robots move through their environment using wheels, legs, or other mechanisms.
+Nodes are the fundamental execution units within the ROS 2 ecosystem, representing individual programs that perform specific robot functions. Each node operates as an isolated process with its own memory space and execution context. Nodes can be implemented in multiple programming languages (C++, Python, Rust, etc.) and communicate seamlessly through the ROS 2 middleware. The node architecture promotes modularity by encapsulating specific robot capabilities within dedicated processes.
+
+Key node characteristics include:
+- **Isolation**: Each node operates independently, preventing cascading failures
+- **Language Independence**: Multi-language compatibility through client libraries
+- **Resource Management**: Separate memory spaces and execution contexts
+- **Distributed Execution**: Nodes can run on different machines while maintaining communication
+
+### Topics and Publishers/Subscribers
+
+Topics implement a publish/subscribe communication model that enables continuous data streaming between nodes. Publishers send data to topics, while subscribers receive data from topics they are interested in. This decoupled architecture allows flexible system composition where publishers and subscribers remain unaware of each other's existence, promoting loose coupling and system scalability.
+
+Topic communication features include:
+- **Asynchronous Messaging**: Data flows continuously without blocking sender/receiver synchronization
+- **Multi-subscriber Support**: Single publisher can feed multiple subscribers simultaneously
+- **Message Types**: Strongly typed messages defined through Interface Definition Language (IDL)
+- **Quality of Service (QoS)**: Configurable reliability and performance parameters
+
+### Services and Clients
+
+Services provide synchronous request/response communication for discrete operations where a specific result is required. Unlike topics which stream data continuously, services handle transactional interactions where a client sends a request and receives a response. This pattern is ideal for operations like navigation goals, sensor calibration, or state queries.
+
+Service characteristics include:
+- **Synchronous Communication**: Request-response blocking pattern
+- **Reliable Delivery**: Guaranteed message delivery and response
+- **Structured Interface**: Well-defined request and response message types
+- **Single Interaction Model**: One request followed by one response
 
 ## Code Blocks
 
-Here's a simple Python example of a hypothetical robot "thinking":
+Here's a comprehensive example demonstrating the core ROS 2 concepts with nodes, topics, and services:
 
-```python title="robot_brain.py"
-def perceive_environment():
-    # Simulate sensing the environment
-    print("Perceiving environment...")
-    return {"object_detected": "red_block", "distance": "1m"}
+```python title="minimal_nodes_demo.py"
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from std_srvs.srv import SetBool
 
-def decide_action(perceived_data):
-    if perceived_data["object_detected"] == "red_block":
-        return "pick_up_red_block"
-    return "explore"
+class MinimalPublisher(Node):
+    def __init__(self):
+        super().__init__('minimal_publisher')
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.i = 0
 
-def execute_action(action):
-    print(f"Executing action: {action}")
-    # Simulate robot movement or manipulation
-    if action == "pick_up_red_block":
-        print("Picking up red block.")
+    def timer_callback(self):
+        msg = String()
+        msg.data = f'Hello World: {self.i}'
+        self.publisher_.publish(msg)
+        self.get_logger().info(f'Publishing: "{msg.data}"')
+        self.i += 1
 
-# Main loop
-if __name__ == "__main__":
-    data = perceive_environment()
-    action = decide_action(data)
-    execute_action(action)
+
+class MinimalSubscriber(Node):
+    def __init__(self):
+        super().__init__('minimal_subscriber')
+        self.subscription = self.create_subscription(
+            String,
+            'topic',
+            self.listener_callback,
+            10)
+        self.subscription  # prevent unused variable warning
+
+    def listener_callback(self, msg):
+        self.get_logger().info(f'I heard: "{msg.data}"')
+
+
+class MinimalService(Node):
+    def __init__(self):
+        super().__init__('minimal_service')
+        self.srv = self.create_service(SetBool, 'set_bool', self.set_bool_callback)
+
+    def set_bool_callback(self, request, response):
+        response.success = request.data
+        response.message = f'Service called with value: {request.data}'
+        self.get_logger().info(response.message)
+        return response
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    minimal_publisher = MinimalPublisher()
+    minimal_subscriber = MinimalSubscriber()
+    minimal_service = MinimalService()
+
+    executor = rclpy.executors.MultiThreadedExecutor()
+    executor.add_node(minimal_publisher)
+    executor.add_node(minimal_subscriber)
+    executor.add_node(minimal_service)
+
+    try:
+        executor.spin()
+    except KeyboardInterrupt:
+        pass
+
+    minimal_publisher.destroy_node()
+    minimal_subscriber.destroy_node()
+    minimal_service.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
 ```
 
 ## Conclusion
 
-AI robotics is a rapidly evolving field with the potential to transform industries and daily life. From autonomous vehicles to advanced manufacturing, the applications are vast and impactful. As we delve deeper into this book, we will explore each of these concepts in more detail.
+The ROS 2 communication architecture provides a robust foundation for developing complex robotic systems through its node-based architecture and flexible messaging patterns. Nodes enable modular development while topics and services offer distinct communication paradigms suited to different types of robot interactions. Understanding these fundamental concepts is essential for building scalable, maintainable robotic applications that can leverage the full power of the ROS 2 ecosystem. This architectural foundation supports the sophisticated integration required for humanoid robot control systems where dozens of sensors, processors, and actuators must coordinate seamlessly.
 
 ## Multiple Choice Questions
 
-1.  Which of the following is NOT a core concept in AI robotics?
-    a) Perception
-    b) Cognition
-    c) Emotion
-    d) Locomotion
+1. Which of the following best describes the relationship between publishers and subscribers in ROS 2 topics?
+   a) Synchronous request/response communication
+   b) Asynchronous publish/subscribe communication
+   c) Blocking transactional communication
+   d) Peer-to-peer direct communication
 
-2.  What does AI robotics combine?
-    a) Artificial intelligence and biology
-    b) Artificial intelligence and pure mathematics
-    c) Artificial intelligence and robotics
-    d) Robotics and art
+2. What is the primary purpose of nodes in the ROS 2 architecture?
+   a) Store persistent robot data only
+   b) Provide the execution units that perform specific robot functions
+   c) Handle only visualization tasks
+   d) Manage network connections exclusively
 
-3.  Sensors in AI robotics are primarily used for:
-    a) Executing actions
-    b) Making decisions
-    c) Gathering data about the environment
-    d) Learning new skills
+3. Quality of Service (QoS) settings in ROS 2 topics are important for:
+   a) Defining message content only
+   b) Configuring reliability and performance parameters
+   c) Determining the color scheme for debugging
+   d) Managing user authentication
 
-4.  If a robot detects a "red_block", what action does the `decide_action` function in the example suggest?
-    a) Explore
-    b) Pick up red block
-    c) Ignore
-    d) Power down
+4. Service communication in ROS 2 differs from topic communication because services use:
+   a) Publish/subscribe patterns
+   b) File-based data transfer
+   c) Request/response synchronous patterns
+   d) Broadcast-only transmission
 
-5.  What is the purpose of the `execute_action` function in the provided code?
-    a) To simulate sensing the environment
-    b) To process perceived data
-    c) To perform an action in the physical world
-    d) To decide the next action
+5. Which characteristic of nodes promotes system reliability in ROS 2?
+   a) Shared memory spaces between all nodes
+   b) Isolation of processes preventing cascading failures
+   c) Single-threaded execution for all nodes
+   d) Mandatory synchronization between all nodes

@@ -1,17 +1,20 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+
+// Define default values for environment variables
+const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:8000';
 
 const config: Config = {
   title: 'Physical AI & Humanoid Robotics',
   tagline: 'Bridging the gap between intelligent algorithms and physical embodiment.',
   favicon: 'img/favicon.ico',
   customFields: {
-    backendApiUrl: process.env.BACKEND_API_URL,
+    // Pass the resolved value instead of the process.env reference
+    backendApiUrl: BACKEND_API_URL,
+    betterAuthUrl: process.env.BETTER_AUTH_URL || 'http://localhost:3003',
   },
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -79,6 +82,7 @@ const config: Config = {
     colorMode: {
       respectPrefersColorScheme: true,
     },
+    // Add the Root component for global components
     navbar: {
       title: 'Physical AI & Humanoid Robotics',
       logo: {
@@ -150,6 +154,10 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
+
+  themes: [
+    // Add any additional themes here
+  ],
 };
 
 export default config;

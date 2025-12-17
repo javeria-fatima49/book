@@ -1,61 +1,73 @@
-import logging
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+import os
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_limiter import FastAPILimiter
-from redis.asyncio import Redis
-from src.core.config import REDIS_URL
-from src.api import rag, translate
+from dotenv import load_dotenv
+from src.api.rag import router as rag_router
+import logging
+from contextlib import asynccontextmanager
+from src.core.database import create_tables
 
-# Configure basic logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler to initialize database on startup."""
+    logger.info("Initializing database tables...")
+    try:
+        await create_tables()
+        logger.info("Database tables initialized successfully!")
+    except Exception as e:
+        logger.warning(f"Database initialization failed (this may be expected if database is not configured): {e}")
+        # Continue startup even if database fails - this allows the app to run with just Qdrant
+        pass
+    yield  # Application runs during this period
+    # Any cleanup code would go here if needed
 
-# Add CORS middleware
-origins = ["*"]
+app = FastAPI(title="AI Book RAG Chatbot API", lifespan=lifespan)
 
+# Add CORS middleware - this is essential for frontend communication
+# For development with React frontend on localhost:3000
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",  # React development server
+        "http://localhost:8000",
+        "http://localhost:8001",  # Backend itself
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        # Add your production domain here in production
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Expose the authorization header so frontend can read it
+    expose_headers=["Access-Control-Allow-Origin"]
 )
 
+from src.api.user_profile import router as user_profile_router
+from src.api.auth import router as auth_router
 
-@app.on_event("startup")
-async def startup():
-    if REDIS_URL:
-        redis = Redis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
-        await FastAPILimiter.init(redis)
-        logger.info("FastAPI Limiter initialized.")
-    else:
-        logger.warning("REDIS_URL is not set. FastAPI Limiter will not be initialized.")
+# Include the RAG router
+app.include_router(rag_router, prefix="/api/v1/rag", tags=["rag"])
 
+# Include the auth router
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 
-@app.on_event("shutdown")
-async def shutdown():
-    await FastAPILimiter.shutdown()
-    logger.info("FastAPI Limiter shutdown.")
-
-
-app.include_router(rag.router, prefix="/api/v1/rag")
-app.include_router(translate.router, prefix="/api/v1")
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    logger.error(f"HTTPException: {exc.status_code} - {exc.detail}")
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"message": exc.detail},
-    )
-
+# Include the user profile router
+app.include_router(user_profile_router, prefix="/api/v1/users", tags=["users"])
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+async def root():
+    return {"message": "Welcome to the AI Book RAG Chatbot API"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "AI Book RAG Chatbot API"}
+
+# Server startup
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
